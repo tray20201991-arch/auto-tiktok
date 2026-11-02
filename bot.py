@@ -1,22 +1,35 @@
-import requests, telebot, random
+import requests, telebot, io
 TOKEN = "8093135920:AAFGm0JYeytgv4SBpRV-PeYbbiBrmjER0Ew"
 CHANNEL = "@st00rg"
 bot = telebot.TeleBot(TOKEN)
-headers = {"User-Agent": "Mozilla/5.0", "Referer": "https://www.tikwm.com/"}
-def get_video():
+
+# فيديو مضحك حقيقي مضمون بيه صوت ويشتغل بتيليجرام
+BACKUP_URL = "https://www.w3schools.com/html/mov_bbb.mp4"
+
+def get_valid_video():
+    # نحاول نجيب من تيك توك
     try:
-        data = {"keywords": "funny", "count": 20, "cursor": 0, "hd": 1}
-        r = requests.post("https://www.tikwm.com/api/feed/search", data=data, headers=headers, timeout=30).json()
-        vids = r['data']['videos']
-        for _ in range(5):
-            v = random.choice(vids)
-            play_url = v.get('play') or v.get('hdplay') or v.get('wmplay')
-            if play_url:
-                vb = requests.get(play_url, headers=headers, timeout=60).content
-                if len(vb) > 100000:
-                    return vb, v.get('title','فيديو مضحك جديد 😂')
+        headers = {"User-Agent": "Mozilla/5.0", "Referer": "https://www.tikwm.com/"}
+        r = requests.post("https://www.tikwm.com/api/feed/search", data={"keywords":"funny","count":"5","hd":"1"}, headers=headers, timeout=20).json()
+        url = r['data']['videos'][0]['hdplay']
+        data = requests.get(url, headers=headers, timeout=40).content
+        # نتأكد انه فيديو حقيقي مو صفحة خطأ
+        if data[:4] != b'\x00\x00\x00' and b'ftyp' not in data[:20]:
+            raise Exception("not mp4")
+        if len(data) > 300000:
+            return data, r['data']['videos'][0].get('title','فيديو مضحك 😂')
     except Exception as e:
-        print(e)
-    return requests.get("https://www.w3schools.com/html/mov_bbb.mp4").content, "فيديو مضحك 😂"
-video_bytes, caption = get_video()
-bot.send_video(CHANNEL, video_bytes, caption=f"{caption}\n\n#مضحك #تيك_توك #st00rg\n\nتابعونا: @st00rg")
+        print(f"TikTok fail: {e}")
+    
+    # اذا فشل، نجيب الفيديو المضمون الي بيه صوت
+    print("Using backup")
+    return requests.get(BACKUP_URL, timeout=20).content, "فيديو مضحك جديد 😂"
+
+video_data, caption = get_valid_video()
+
+# هاي الحركة المهمة الي تصلح 00:00
+video_file = io.BytesIO(video_data)
+video_file.name = "video.mp4"
+
+bot.send_video(CHANNEL, video_file, caption=f"{caption}\n\n#مضحك #تيك_توك\nتابعونا: @st00rg", supports_streaming=True)
+print("Done!")
