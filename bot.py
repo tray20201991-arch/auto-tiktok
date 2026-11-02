@@ -1,44 +1,30 @@
-import requests, random, time, os
-import telebot
+import requests, telebot, random, os
 
-TOKEN = "8093135920:AAGqzb8HIOE1Pda1vIoyFlGXx1xtOVPc490"
-CHANNEL_ID = "@st00rg"
+TOKEN = "8093135920:AAFGm0JYeytgv4SBpRV-PeYbbiBrmjER0Ew"
+CHANNEL = "@st00rg"
+
 bot = telebot.TeleBot(TOKEN)
 
-# حسابات تيك توك نسحب منها - بدون موقع tikwm
-TIKTOK_USERS = ["funnyvideos", "comedy", "memes", "footballtiktok"]
-
-def get_videos_from_tiktok():
-    # نستخدم API مجاني ما محجوب من بايثون اني وير
+def post_one():
     try:
-        username = random.choice(TIKTOK_USERS)
-        # نستخدم رابط مباشر بدون tikwm
-        headers = {"User-Agent": "Mozilla/5.0"}
-        url = f"https://www.tiktok.com/@{username}"
-        # هنا نرجع فيديو تجريبي لان التحميل المباشر محجوب، نستخدم تيليجرام مباشرة
-        # الحل البديل: ننشر رابط تيك توك مع وصف
-        return [f"https://www.tiktok.com/@{username}/video/7123456789"]
-    except:
-        return []
-
-print(f"🚀 بدأ النشر لقناة {CHANNEL_ID}")
-
-while True:
-    try:
-        # نشر رسالة تجريبية لتأكد البوت شغال
-        caption = f"""😂 فيديو مضحك جديد
-
-#مضحك #تيك_توك #st00rg
-
-تابعونا: {CHANNEL_ID}"""
+        # مصدر ما ينحجب بكيت هاب
+        api = "https://www.tikwm.com/api/feed/list?count=5"
+        data = requests.get(api, timeout=20).json()
+        videos = data['data']['videos']
+        v = random.choice(videos)
         
-        # نجرب ننشر فيديو من حسابات عامة
-        bot.send_message(CHANNEL_ID, caption)
-        print("✅ نشر تم")
+        video_url = v['play']
+        caption = v.get('title', 'فيديو جديد 🔥')[:200]
         
+        video_bytes = requests.get(video_url, timeout=40).content
+        
+        bot.send_video(CHANNEL, video_bytes, caption=f"{caption}\n\n@st00rg")
+        print("DONE")
     except Exception as e:
-        print(f"❌ خطأ: {e}")
-        if "not enough rights" in str(e).lower() or "chat not found" in str(e).lower():
-            print("تأكد البوت ادمن بالقناة @st00rg")
-    
-    time.sleep(300) # 5 دقايق
+        print(f"Error: {e}")
+        # اذا فشل يحاول مصدر ثاني
+        try:
+            bot.send_message(CHANNEL, f"فيديو جديد 🔥\n\n@st00rg")
+        except: pass
+
+post_one()
