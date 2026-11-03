@@ -4,11 +4,11 @@ on:
   push:
   workflow_dispatch:
   schedule:
-    - cron: '*/30 * * * *' # يعيد فحص التشغيل كل 30 دقيقة
+    - cron: '*/30 * * * *'
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
     - name: Checkout repository
