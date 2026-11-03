@@ -1,15 +1,31 @@
-name: TikTok Auto
+name: Run Telegram Search Bot
+
 on:
-  schedule:
-    - cron: '*/15 * * * *'
+  push:
   workflow_dispatch:
+  schedule:
+    - cron: '*/30 * * * *' # يعيد فحص التشغيل كل 30 دقيقة
+
 jobs:
-  post:
+  build:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-python@v6
-        with:
-          python-version: '3.10'
-      - run: pip install pyTelegramBotAPI requests
-      - run: python bot.py
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies & FFmpeg
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run Bot
+      run: |
+        python bot.py
